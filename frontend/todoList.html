@@ -1,0 +1,101 @@
+<html>
+  <head>
+    
+    <title>Todo List</title>
+    <link rel="stylesheet" href="index.css" />
+    <script>
+      async function deleteTodo(id) {
+        try {
+          const res = await fetch(`http://localhost:8080/deleteTodos/${id}`, {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+            },
+          })
+          const resInJson = await res.json()
+          if (resInJson.status === "done") {
+            getTodos()
+          } else {
+            throw new Error("Error deleting todo")
+          }
+        } catch (err) {
+          alert("SOMETHING WENT WRONG")
+        }
+      }
+
+      function getTodos() {
+        fetch("http://localhost:8080/todolist", {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+          },
+        }).then((res) => {
+          res.json().then((output) => {
+            const getTodolist = output.result
+            const listDiv = document.getElementById("todo-list")
+            listDiv.innerHTML = ""
+
+            getTodolist.forEach((obj, idx) => {
+              const parentDiv = document.createElement("div")
+              parentDiv.classList.add("todo-item-container")
+
+              const newdiv = document.createElement("div")
+              newdiv.textContent = `${idx + 1}. ${obj.todos}`
+              newdiv.classList.add("todo-item")
+
+              const deleteButton = document.createElement("button")
+              deleteButton.textContent = "Delete"
+              deleteButton.classList.add("delete-button")
+              deleteButton.onclick = () => {
+                deleteTodo(obj.id)
+              }
+
+              parentDiv.appendChild(newdiv)
+              parentDiv.appendChild(deleteButton)
+              listDiv.appendChild(parentDiv)
+            })
+          })
+        })
+      }
+
+      function addTodos() {
+        const inputElement = document.getElementById("todo-input")
+        const inputValue = inputElement.value.trim()
+        if (!inputValue) return
+
+        fetch("http://localhost:8080/addTodos", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            todos: [inputValue],
+          }),
+        }).then((res) => {
+          res.json().then((output) => {
+            if (output.status === "done") {
+              getTodos()
+              inputElement.value = ""
+            } else {
+              alert("SOMETHING WENT WRONG")
+            }
+          })
+        })
+      }
+      getTodos()
+    </script>
+  </head>
+  <body>
+    <div class="box">
+      <h1>My TODO List</h1>
+      <div
+        id="todo-list"
+        class="todo-list"
+      ></div>
+      <div class="input-container">
+        <input id="todo-input" type="text" placeholder="What needs to be done?" />
+        <button onclick="addTodos()" class="add-button">Add</button>
+      </div>
+    </div>
+  </body>
+</html>
